@@ -85,6 +85,7 @@ void printUsage(){
     cout << "  <ply_obstacle>               ply-mesh-model obstacle tag.\n";
     cout << "  ini_walkers_pos <string>     Custom initial particles position (intra, extra).\n";
     cout << "  num_process <int>            Number of processors to use.\n";
+    cout << "  boundary_conditions <type>   mirror (default) or periodic voxel walls.\n";
 
     cout << "  <END>                        END of the conf-file parameters (needed).\n";
 

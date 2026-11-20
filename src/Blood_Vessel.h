@@ -42,7 +42,7 @@ class Blood_Vessel : public Obstacle
 
         int getObstacleType() const override;
 
-        void set_spheres(std::vector<Sphere> &spheres_to_add);
+        void set_spheres(std::vector<Sphere> &spheres_to_add) override;
                                               
         void distance_to_skeleton(const Walker &w, double& min_dist, Eigen::Vector3d& tangent);
         

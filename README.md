@@ -127,6 +127,10 @@ xmax ymax zmax
 </sampling_area>
 ```
 
+### Boundary conditions
+Set `boundary_conditions periodic` to wrap walkers across the voxel, or `boundary_conditions mirror` for reflecting/mirror walls (default). Periodic mode creates translated images of boundary-crossing sphere geometry, retaining the original obstacle and cell identity. This covers glial cells, axons, blood vessels, and standalone sphere obstacles; cylinder and PLY geometry are not periodically imaged.
+
+
 ## Scheme Files
 
 Scheme files are located in the `instructions/scheme/` directory. These files are essential for defining the parameters of your PGSE (Pulsed Gradient Spin Echo) sequences. Each line in a scheme file describes a single gradient direction and associated parameters required for the simulation or analysis. The parameters are specified in the following order: X Y Z G Δ δ TE

@@ -280,17 +280,19 @@ Eigen::Matrix3d Blood_Vessel::rotation_matrix_from_vectors(const Eigen::Vector3d
 // =========================================================================
 
 void Blood_Vessel::set_spheres(std::vector<Sphere> &spheres_to_add) {
-    spheres.clear();
-    if (spheres_to_add.empty()) return;
+    if (&spheres_to_add != &spheres)
+        spheres = spheres_to_add;
 
-    for (const auto &sphere : spheres_to_add) {
+    for (const auto &sphere : spheres) {
         if (sphere.id < 0) assert(0);
-        spheres.push_back(sphere);
     }
+
     skeleton.clear();
     for (unsigned i = 0; i < spheres.size(); i++){
         skeleton.push_back(spheres[i].P);
-    } 
+    }
+
+    if (spheres.empty()) return;
     build_bv_grid_spheres(spheres, 1, barrier_tickness);
 }
 

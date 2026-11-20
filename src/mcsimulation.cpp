@@ -975,7 +975,9 @@ void MCSimulation::addGlialsObstaclesFromSWC()
     }
 
 
-    std::cout << "Number of glials: " << dynamicsEngine->glials_list.size() << std::endl;
+    if (dynamicsEngine->id == 0) {
+        std::cout << "Number of glials: " << dynamicsEngine->glials_list.size() << std::endl;
+    }
 }
 
 bool isInsideVoxel(Eigen::Vector3d position, double distance, std::pair<Eigen::Vector3d,Eigen::Vector3d> voxel)
@@ -1194,9 +1196,11 @@ void MCSimulation::addGlialsObstaclesFromCSV()
         in.close();
     }
 
-    std::cout << "Number of glials: "
-              << dynamicsEngine->glials_list.size()
-              << std::endl;
+    if (dynamicsEngine->id == 0) {
+        std::cout << "Number of glials: "
+                  << dynamicsEngine->glials_list.size()
+                  << std::endl;
+    }
 }
 
 

@@ -489,6 +489,7 @@ void DynamicsSimulation::initSimulation()
         }
     }
 
+    addPeriodicObstacleImages();
     initObstacleInformation(); 
 
     //Flags for the crossing and stuck particles. (numerical error sentinels)
@@ -508,6 +509,27 @@ void DynamicsSimulation::initSimulation()
            params.max_sampling_area[i]=voxels_list[0].max_limits[i];
         }
     }
+}
+
+void DynamicsSimulation::addPeriodicObstacleImages()
+{
+    if (!params.periodic_boundaries || periodic_obstacle_images_initialized || voxels_list.empty())
+        return;
+
+    const Eigen::Vector3d& min_limits = voxels_list[0].min_limits;
+    const Eigen::Vector3d& max_limits = voxels_list[0].max_limits;
+
+    for (Glial& glial : glials_list)
+        glial.addPeriodicImages(min_limits, max_limits);
+    for (Axon& axon : axons_list)
+        axon.addPeriodicImages(min_limits, max_limits);
+    for (Axon& inner_axon : inner_axons_list)
+        inner_axon.addPeriodicImages(min_limits, max_limits);
+    for (Blood_Vessel& blood_vessel : blood_vessels_list)
+        blood_vessel.addPeriodicImages(min_limits, max_limits);
+
+    Obstacle::appendPeriodicSphereImages(spheres_list, min_limits, max_limits);
+    periodic_obstacle_images_initialized = true;
 }
 
 
@@ -1830,7 +1852,7 @@ bool DynamicsSimulation::updateWalkerPosition(Eigen::Vector3d& step, unsigned &t
         walker.getRealPosition(real_pos);
         Eigen::Vector3d adapted_step;
 
-        if (walker.normal == Eigen::Vector3d {0,0,0}){
+        if (params.periodic_boundaries || walker.normal == Eigen::Vector3d {0,0,0}){
             walker.setRealPosition(real_pos  + tmax*bounced_step);
         } 
         else{
@@ -2036,30 +2058,13 @@ void DynamicsSimulation::handleCollisions(Collision &collision, Collision &colli
 
 void DynamicsSimulation::mapWalkerIntoVoxel(const Eigen::Vector3d &bounced_step, const Collision &collision,const double &barrier_thickness)
 {
-  
-    walker.setRealPosition(walker.pos_r + collision.t*bounced_step);
-
-    Eigen::Vector3d voxel_pos = walker.pos_v + (collision.t)*bounced_step;
-
-    bool mapped = false;
-    for(int i = 0 ; i < 3; i++)
-    {
-        if ( fabs(voxel_pos[i] -  voxels_list[0].min_limits[i]) <= EPS_VAL){
-            voxel_pos[i] = voxels_list[0].max_limits[i];
-            mapped = true;
-        }
-        else if ( fabs(voxel_pos[i] - voxels_list[0].max_limits[i]) <= EPS_VAL){
-            voxel_pos[i] = voxels_list[0].min_limits[i];
-            mapped = true;
-        }
-    }
-
+    Eigen::Vector3d voxel_pos = walker.pos_v;
+    const bool mapped = mapPeriodicVoxelCrossing(walker.pos_r, voxel_pos, bounced_step, collision.t,
+                                                  voxels_list[0].min_limits, voxels_list[0].max_limits);
     walker.setVoxelPosition(voxel_pos);
 
-
-    if (mapped){
+    if (mapped)
         initWalkerObstacleIndexes();
-    }
 }
 /*
 void DynamicsSimulation::mapWalkerIntoVoxel_tortuous(Eigen::Vector3d& bounced_step, Collision &collision)
@@ -2134,6 +2139,12 @@ Eigen::Vector3d DynamicsSimulation::findMirrorStep(const Eigen::Vector3d& bounce
 
 void DynamicsSimulation::mapWalkerIntoVoxel_tortuous(const Eigen::Vector3d& bounced_step, Collision &collision)
 {
+    if (params.periodic_boundaries){
+        mapWalkerIntoVoxel(bounced_step, collision, barrier_tickness);
+        collision.bounced_direction = bounced_step;
+        return;
+    }
+
     Eigen::Vector3d previous_v_pos = walker.pos_v;
 
     walker.setVoxelPosition(walker.pos_v + collision.t*bounced_step); 
@@ -2403,7 +2414,7 @@ bool DynamicsSimulation::updateWalkerPositionAndHandleBouncing(Vector3d &bounced
         
         //We update the position.
         Eigen::Vector3d adapted_step;
-        if (walker.normal == Eigen::Vector3d {0,0,0}){
+        if (params.periodic_boundaries || walker.normal == Eigen::Vector3d {0,0,0}){
             walker.setRealPosition(real_pos + displ*bounced_step);
         } 
         else{

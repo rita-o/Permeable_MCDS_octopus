@@ -859,6 +859,7 @@ void SimErrno::printSimulatinInfo(Parameters &params, ostream &out,bool color)
 
 
     infoMenu(" Number of voxels:      ------", " " + to_string( params.voxels_list.size()),out, color,35);
+    infoMenu(" Boundary conditions:  ------", params.periodic_boundaries ? " periodic" : " mirror",out, color,35);
 
     if(params.custom_sampling_area)
         infoMenu(" Custom spawning area:  ------"," true" ,out, color,35);

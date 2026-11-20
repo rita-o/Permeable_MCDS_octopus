@@ -55,6 +55,12 @@ public:
     bool CheckCollision(Walker& walker, Eigen::Vector3d &step, double &tmax, Collision& colision);
 };
 
+bool mapPeriodicVoxelCrossing(Eigen::Vector3d& real_position,
+                              Eigen::Vector3d& voxel_position,
+                              const Eigen::Vector3d& step,
+                              double distance,
+                              const Eigen::Vector3d& min_limits,
+                              const Eigen::Vector3d& max_limits);
 
 
 #endif // VOXEL_H

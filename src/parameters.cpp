@@ -155,6 +155,22 @@ void Parameters::readSchemeFile(std::string conf_file_path)
         else if(str_dist(tmp,"scale_from_stu") <= 2){
             in >> scale_from_stu;
         }
+        else if(str_dist(tmp,"boundary_conditions") <= 2){
+            string boundary_type;
+            in >> boundary_type;
+            std::transform(boundary_type.begin(), boundary_type.end(), boundary_type.begin(), ::tolower);
+
+            if(boundary_type == "periodic"){
+                periodic_boundaries = true;
+            }
+            else if(boundary_type == "mirror"){
+                periodic_boundaries = false;
+            }
+            else{
+                SimErrno::warning("Unknown boundary condition type: " + boundary_type + ". Using mirror boundaries.", cout);
+                periodic_boundaries = false;
+            }
+        }
         else if(str_dist(tmp,"seed") <= 1){
             in >> seed;
         }

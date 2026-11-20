@@ -44,6 +44,7 @@ public:
     bool write_bin;                                 /*!< flag, writes the output signal in binary format (True by default)          */
     bool scale_from_stu;                            /*!< flag, true if the scheme file is in standar units m,s                      */
     bool save_phase_shift;                          /*!< flag, saves the phase shift distribution for all particles                 */
+    bool periodic_boundaries = false;               /*!< true for periodic voxel walls, false for mirror walls                       */
     long seed;                                      /*!< Initial seed for the random generator                                      */
     bool verbatim;                                  /*!< False to omit displaying state and warnings                                */
     std::string traj_file;                          /*!< Trajectory file path                                                       */

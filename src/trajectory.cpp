@@ -10,6 +10,7 @@
 #include "Eigen/src/Core/util/Macros.h"
 #include "walker.h"
 #include <iostream>
+#include <mutex>
 #include <string>
 #include <vector>
 using namespace std;
@@ -388,9 +389,11 @@ void Trajectory::writePosition(const Walker& walker, unsigned &walker_index){
     const Eigen::Matrix3Xd& pos = walker.pos_r_log;
 
     if (write_traj){
-        if(write_bin){
-            cout << "Only text output implemented for location output." << std::endl;
-
+        if (write_location && write_bin) {
+            static std::once_flag location_output_warning;
+            std::call_once(location_output_warning, [] {
+                cout << "Only text output implemented for location output." << std::endl;
+            });
         }
         if (write_txt) { // make sure to write txt if it's true, even if write_bin is true
             writeResidenceSegments(walker, walker_index);

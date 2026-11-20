@@ -3,6 +3,7 @@
 #include "constants.h"
 #include <math.h>
 #include <chrono>
+#include <cmath>
 
 Obstacle::Obstacle():percolation(0.0), prob_cross_e_i(0.0), prob_cross_i_e(0.0), diffusivity_i(0.0), diffusivity_e(0.0), count_perc_crossings(0)
 {}
@@ -111,20 +112,84 @@ inline uint64_t hash3(int x, int y, int z) {
 
 
 void Obstacle::set_spheres(std::vector<Sphere> &spheres_to_add) {
-    spheres.clear();
-    if (spheres_to_add.empty()) return;
-
-    for (const auto &sphere : spheres_to_add) {
-        if (sphere.id < 0) assert(0);
-        spheres.push_back(sphere);
+    if (&spheres_to_add != &spheres){
+        spheres.clear();
+        for (const auto &sphere : spheres_to_add) {
+            if (sphere.id < 0) assert(0);
+            spheres.push_back(sphere);
+        }
     }
+    else{
+        for (const auto &sphere : spheres){
+            if (sphere.id < 0) assert(0);
+        }
+    }
+
+    if (spheres.empty()) return;
     build_bv_grid_spheres(spheres, 1e-2, barrier_tickness);
+}
+
+void Obstacle::appendPeriodicSphereImages(std::vector<Sphere>& source_spheres,
+                                          const Eigen::Vector3d& min_limits,
+                                          const Eigen::Vector3d& max_limits)
+{
+    const std::size_t original_size = source_spheres.size();
+    std::vector<Sphere> images;
+
+    for (std::size_t i = 0; i < original_size; ++i){
+        const Sphere& source = source_spheres[i];
+        if (source.radius <= 0.0)
+            continue;
+
+        std::vector<long long> shifts[3];
+        for (int axis = 0; axis < 3; ++axis){
+            const double period = max_limits[axis] - min_limits[axis];
+            if (period <= 0.0)
+                return;
+
+            const double lower_shift = std::ceil((min_limits[axis] - source.radius - source.P[axis]) / period - 1e-12);
+            const double upper_shift = std::floor((max_limits[axis] + source.radius - source.P[axis]) / period + 1e-12);
+            for (long long shift = static_cast<long long>(lower_shift);
+                 shift <= static_cast<long long>(upper_shift);
+                 ++shift){
+                shifts[axis].push_back(shift);
+            }
+        }
+
+        for (long long x_shift : shifts[0]){
+            for (long long y_shift : shifts[1]){
+                for (long long z_shift : shifts[2]){
+                    if (x_shift == 0 && y_shift == 0 && z_shift == 0)
+                        continue;
+
+                    Sphere image = source;
+                    image.P += Eigen::Vector3d(
+                        x_shift * (max_limits.x() - min_limits.x()),
+                        y_shift * (max_limits.y() - min_limits.y()),
+                        z_shift * (max_limits.z() - min_limits.z()));
+                    images.push_back(image);
+                }
+            }
+        }
+    }
+
+    source_spheres.insert(source_spheres.end(), images.begin(), images.end());
+}
+
+void Obstacle::addPeriodicImages(const Eigen::Vector3d& min_limits,
+                                 const Eigen::Vector3d& max_limits)
+{
+    const std::size_t original_size = spheres.size();
+    appendPeriodicSphereImages(spheres, min_limits, max_limits);
+    if (spheres.size() != original_size)
+        set_spheres(spheres);
 }
 
 
 void Obstacle::build_bv_grid_spheres(const std::vector<Sphere>& spheres_to_add, double cell_size, double pad)
 {
-    spheres = spheres_to_add;
+    if (&spheres_to_add != &spheres)
+        spheres = spheres_to_add;
     grid = HashGrid{};
     grid.cell = (cell_size > 0.0 ? cell_size : 1.0);
     grid.build_pad = std::max(0.0, pad);
@@ -348,7 +413,7 @@ bool Obstacle::checkCollision(const Walker& walker, Eigen::Vector3d& step, const
             if (isPosInsideObstacle(p0, barrier_tickness + drift_tolerance)) {
                 start_inside = true; // Forgive micro-drift, trust the walker
             } else {
-                cout << "\n[FATAL LEAK] Walker state: 'intra', but physically OUTSIDE the vessel!" << endl;
+                cout << "\n[FATAL LEAK] Walker state: 'intra', but physically OUTSIDE this obstacle!" << endl;
                 cout << "Walker Pos: " << p0.transpose() << endl;
                 collision.type = Collision::leaked; 
                 return false; 
@@ -358,7 +423,7 @@ bool Obstacle::checkCollision(const Walker& walker, Eigen::Vector3d& step, const
             if (!isPosInsideObstacle(p0, barrier_tickness - drift_tolerance)) {
                 start_inside = false; // Forgive micro-drift, trust the walker
             } else {
-                cout << "\n[FATAL LEAK] Walker state: 'extra', but physically INSIDE the vessel!" << endl;
+                cout << "\n[FATAL LEAK] Walker state: 'extra', but physically INSIDE this obstacle!" << endl;
                 cout << "Walker Pos: " << p0.transpose() << endl;
                 collision.type = Collision::leaked; 
                 return false; 

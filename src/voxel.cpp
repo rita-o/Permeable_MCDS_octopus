@@ -1,6 +1,7 @@
 #include "voxel.h"
 #include "constants.h"
 #include <Eigen/Dense>
+#include <cmath>
 
 Voxel::Voxel()
 {
@@ -40,6 +41,30 @@ bool Voxel::CheckCollision(Walker &walker, Eigen::Vector3d& step, double& tmax, 
     }
 
     return colision.type != Collision::null;
+}
+
+bool mapPeriodicVoxelCrossing(Eigen::Vector3d& real_position,
+                              Eigen::Vector3d& voxel_position,
+                              const Eigen::Vector3d& step,
+                              double distance,
+                              const Eigen::Vector3d& min_limits,
+                              const Eigen::Vector3d& max_limits)
+{
+    real_position += distance * step;
+    voxel_position += distance * step;
+
+    bool mapped = false;
+    for (int axis = 0; axis < 3; ++axis){
+        if (std::abs(voxel_position[axis] - min_limits[axis]) <= EPS_VAL){
+            voxel_position[axis] = max_limits[axis];
+            mapped = true;
+        }
+        else if (std::abs(voxel_position[axis] - max_limits[axis]) <= EPS_VAL){
+            voxel_position[axis] = min_limits[axis];
+            mapped = true;
+        }
+    }
+    return mapped;
 }
 
 Plane::Plane(Eigen::Vector3d normal_, Eigen::Vector3d plane_center_, double d_):normal(normal_),plane_center(plane_center_),d(d_)

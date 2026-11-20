@@ -46,6 +46,7 @@ public:
     double curr_diffusivity;                         /*!< diffusivity at current step                                             */
     double second_passed;                           /*!< Simulation total time in seconds                                           */
     double max_simulation_time;                     /*!< Maximum simulation time if not passed we carry all the particles           */
+    bool periodic_obstacle_images_initialized = false;
     double completed;                               /*!< Auxiliar variable to save the milestone of percentage of completed walkers */
     std::string  ini_pos_file;                      /*!< walkers intitial position file                                             */
     unsigned ini_pos_file_ini_index;                /*!< starting position in the ini walker position file (multicore support)      */
@@ -276,6 +277,8 @@ private:
      (intra or extra)
      */
     inline void mapWalkerIntoVoxel_tortuous(const Eigen::Vector3d& bounced_step, Collision &collision);
+
+    void addPeriodicObstacleImages();
 
 
     /*! \fn     getTimeDt

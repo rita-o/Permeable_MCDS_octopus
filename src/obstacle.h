@@ -76,7 +76,12 @@ public:
 
     inline void extend(Box& b, const Eigen::Vector3d& p);
 
-    void set_spheres(std::vector<Sphere> &spheres_to_add);
+    virtual void set_spheres(std::vector<Sphere> &spheres_to_add);
+
+    void addPeriodicImages(const Eigen::Vector3d& min_limits, const Eigen::Vector3d& max_limits);
+    static void appendPeriodicSphereImages(std::vector<Sphere>& spheres,
+                                           const Eigen::Vector3d& min_limits,
+                                           const Eigen::Vector3d& max_limits);
 
     void build_bv_grid_spheres(const std::vector<Sphere>& spheres_to_add, double cell_size, double pad);
 
